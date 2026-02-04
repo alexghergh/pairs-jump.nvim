@@ -44,18 +44,12 @@ M.setup = function(opts)
     M.config = vim.tbl_deep_extend('force', defaults, opts or {})
 
     -- get fallbacks
-    local left_default_callback
-    local right_default_callback
-    if M.config.fallback == true then
-        left_default_callback = utils.get_fallback_mapping(
-            'i',
-            M.config.keymaps.search_left
-        ) or function() end
-        right_default_callback = utils.get_fallback_mapping(
-            'i',
-            M.config.keymaps.search_right
-        ) or function() end
-    end
+    local left_default_callback = M.config.fallback
+            and utils.get_fallback_mapping('i', M.config.keymaps.search_left)
+        or function() end
+    local right_default_callback = M.config.fallback
+            and utils.get_fallback_mapping('i', M.config.keymaps.search_right)
+        or function() end
 
     -- left search + jump
     vim.keymap.set('i', M.config.keymaps.search_left, function()

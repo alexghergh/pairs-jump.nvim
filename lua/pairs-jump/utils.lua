@@ -7,7 +7,7 @@ M.jump_left = function(delimiters, viewport_only, respect_scrolloff, jump_after)
     -- scrolloff at the exact start of the buffer doesn't move the window, so we
     -- should ignore it there
     local scrloff_reg = 0
-    if respect_scrolloff then
+    if viewport_only and respect_scrolloff then
         if vim.fn.line('w0') ~= 1 then
             scrloff_reg = vim.o.scrolloff
         end
@@ -67,7 +67,7 @@ M.jump_right = function(
     -- scrolloff at the exact end of the buffer doesn't move the window, so we
     -- should ignore it there
     local scrloff_reg = 0
-    if respect_scrolloff then
+    if viewport_only and respect_scrolloff then
         if vim.api.nvim_buf_line_count(0) ~= vim.fn.line('w$') then
             scrloff_reg = vim.o.scrolloff
         end
