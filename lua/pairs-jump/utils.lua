@@ -1,5 +1,59 @@
 local M = {}
 
+local function feed_mapping_keys(keys, map)
+    if keys == nil then
+        return
+    end
+
+    if type(keys) ~= 'string' then
+        keys = tostring(keys)
+    end
+
+    local should_replace_keycodes = map.expr ~= 1 or map.replace_keycodes == 1
+    if should_replace_keycodes then
+        keys = vim.api.nvim_replace_termcodes(keys, true, true, true)
+    end
+
+    local feed_mode = map.noremap == 1 and 'in' or 'im'
+    vim.api.nvim_feedkeys(keys, feed_mode, false)
+end
+
+local function get_mapping_result(map)
+    if map.callback then
+        return map.callback()
+    end
+
+    if map.expr == 1 then
+        return vim.fn.eval(map.rhs)
+    end
+
+    return map.rhs
+end
+
+-- get a default callback function for a specific mapping
+M.get_fallback_mapping = function(mode, lhs)
+    local map = vim.fn.maparg(lhs, mode, false, true)
+    if vim.tbl_isempty(map) then
+        return nil
+    end
+
+    -- normalize the saved mapping so callers can invoke it like a plain
+    -- function
+    return function()
+        if map.expr == 1 then
+            feed_mapping_keys(get_mapping_result(map), map)
+            return
+        end
+
+        if map.callback then
+            map.callback()
+            return
+        end
+
+        feed_mapping_keys(map.rhs, map)
+    end
+end
+
 M.jump_left = function(delimiters, viewport_only, respect_scrolloff, jump_after)
     -- start from current position
     local row, col = unpack(vim.api.nvim_win_get_cursor(0))
@@ -110,21 +164,6 @@ M.jump_right = function(
         end
     end
     return false
-end
-
--- get a default callback function for a specific mapping
-M.get_fallback_mapping = function(mode, lhs)
-    for _, map in ipairs(vim.api.nvim_get_keymap(mode)) do
-        -- check mapping equality; this makes sure things like <M-x> and <A-x>
-        -- are equal
-        if
-            vim.api.nvim_replace_termcodes(map.lhs, true, true, true)
-            == vim.api.nvim_replace_termcodes(lhs, true, true, true)
-        then
-            return map.callback
-        end
-    end
-    return nil
 end
 
 return M
